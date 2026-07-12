@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>공수 캘린더</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <button class="icon-button" id="menuButton" aria-label="메뉴">☰</button>
+        <h1>공수 캘린더</h1>
+        <button class="icon-button" id="settingsButton" aria-label="설정">⚙</button>
+      </header>
+
+      <section class="hero-card">
+        <p class="eyebrow" id="todayText"></p>
+        <p class="hero-message"><strong id="streakCount">이번 달</strong>도 차근차근<br />기록해 보세요 <span>✦</span></p>
+      </section>
+
+      <section class="calendar-card" aria-label="공수 달력">
+        <div class="month-bar">
+          <button class="nav-button" id="prevMonth" aria-label="이전 달">‹</button>
+          <button class="month-title" id="monthTitle" aria-label="오늘로 이동"></button>
+          <button class="nav-button" id="nextMonth" aria-label="다음 달">›</button>
+        </div>
+        <div class="weekdays" aria-hidden="true">
+          <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </section>
+
+      <section class="summary-card">
+        <div>
+          <span>이번 달 공수</span>
+          <strong id="monthlyManDays">0.00 공수</strong>
+        </div>
+        <div>
+          <span>이번 달 수입</span>
+          <strong id="monthlyIncome">0원</strong>
+        </div>
+        <button id="detailButton">상세 보기 <span>→</span></button>
+      </section>
+    </main>
+
+    <aside class="settings-panel" id="settingsPanel" aria-hidden="true">
+      <div class="panel-head"><h2>기본 설정</h2><button class="close-panel" aria-label="닫기">×</button></div>
+      <label>기본 단가<input type="number" id="defaultRate" min="0" step="1000" /></label>
+      <label>이름<input type="text" id="workerName" placeholder="이름을 입력하세요" /></label>
+      <button class="primary full" id="saveSettings">저장</button>
+      <p>기록은 이 기기의 브라우저에 안전하게 저장됩니다.</p>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+
+    <dialog id="recordDialog">
+      <form method="dialog" id="recordForm">
+        <div class="dialog-head">
+          <div><p class="dialog-label">일일 공수 기록</p><h2 id="dialogDate"></h2></div>
+          <button class="close-dialog" value="cancel" aria-label="닫기">×</button>
+        </div>
+        <div class="quick-options" id="quickOptions"></div>
+        <div class="form-grid">
+          <label>공수<input id="manDays" type="number" min="0" max="24" step="0.1" required /></label>
+          <label>단가<input id="rate" type="number" min="0" step="1000" required /></label>
+          <label>일비<input id="allowance" type="number" min="0" step="1000" value="0" /></label>
+        </div>
+        <label class="memo-label">메모<textarea id="memo" maxlength="50" placeholder="현장, 업무 내용 등을 적어 주세요"></textarea><span><b id="memoLength">0</b>/50</span></label>
+        <div class="total-line">오늘 수입 <strong id="dayTotal">0원</strong></div>
+        <div class="dialog-actions">
+          <button class="danger" type="button" id="deleteRecord">기록 삭제</button>
+          <span></span>
+          <button class="secondary" value="cancel">취소</button>
+          <button class="primary" id="saveRecord" value="default">저장</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="detailDialog">
+      <form method="dialog">
+        <div class="dialog-head"><div><p class="dialog-label">월간 리포트</p><h2 id="detailTitle"></h2></div><button class="close-dialog" aria-label="닫기">×</button></div>
+        <div class="report-stats"><div><span>기록 일수</span><strong id="workDays">0일</strong></div><div><span>평균 공수</span><strong id="averageDays">0.00</strong></div><div><span>총 수입</span><strong id="reportIncome">0원</strong></div></div>
+        <div id="recordList" class="record-list"></div>
+      </form>
+    </dialog>
+    <script src="app.js"></script>
+  </body>
+</html>
