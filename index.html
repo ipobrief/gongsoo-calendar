@@ -8,6 +8,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
+    <style>
+      .fill-options{display:flex;flex-direction:column;gap:10px;margin:17px 0 2px}.fill-options label{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;cursor:pointer}.fill-options input{appearance:none;width:20px;height:20px;margin:0;border:2px solid #b8c5d1;border-radius:5px;background:white;display:grid;place-content:center}.fill-options input:checked{border-color:#287fdd;background:#287fdd}.fill-options input:checked:after{content:'✓';color:white;font-size:14px;font-weight:700;line-height:1}
+    </style>
   </head>
   <body>
     <main class="app-shell">
@@ -69,6 +72,10 @@
           <label>일비<input id="allowance" type="number" min="0" step="1000" value="0" /></label>
         </div>
         <label class="memo-label">메모<textarea id="memo" maxlength="50" placeholder="현장, 업무 내용 등을 적어 주세요"></textarea><span><b id="memoLength">0</b>/50</span></label>
+        <div class="fill-options" aria-label="일괄 입력 옵션">
+          <label><input type="checkbox" id="fillWeekly" /><span>매주 <b id="weekdayLabel">수</b>요일 전부 채우기</span></label>
+          <label><input type="checkbox" id="fillAfter" /><span>이후 날짜 전부 채우기</span></label>
+        </div>
         <div class="total-line">오늘 수입 <strong id="dayTotal">0원</strong></div>
         <div class="dialog-actions">
           <button class="danger" type="button" id="deleteRecord">기록 삭제</button>

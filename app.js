@@ -29,3 +29,33 @@ $('#prevMonth').onclick=()=>{current=new Date(current.getFullYear(),current.getM
 const openSettings=()=>{$('#defaultRate').value=state.settings.rate;$('#workerName').value=state.settings.name;$('#settingsPanel').classList.add('open');$('#scrim').classList.add('show');};const closeSettings=()=>{$('#settingsPanel').classList.remove('open');$('#scrim').classList.remove('show')};$('#settingsButton').onclick=openSettings;$('.close-panel').onclick=closeSettings;$('#scrim').onclick=closeSettings;$('#saveSettings').onclick=()=>{state.settings.rate=+$('#defaultRate').value||0;state.settings.name=$('#workerName').value.trim();save();closeSettings();render()};
 $('#detailButton').onclick=()=>{const prefix=`${current.getFullYear()}-${String(current.getMonth()+1).padStart(2,'0')}`, rows=Object.entries(state.records).filter(([k])=>k.startsWith(prefix)).sort();const mans=rows.reduce((s,[,r])=>s+r.manDays,0),income=rows.reduce((s,[,r])=>s+r.manDays*r.rate+(+r.allowance||0),0);$('#detailTitle').textContent=$('#monthTitle').textContent;$('#workDays').textContent=`${rows.length}일`;$('#averageDays').textContent=rows.length?(mans/rows.length).toFixed(2):'0.00';$('#reportIncome').textContent=won(income);$('#recordList').innerHTML=rows.length?rows.map(([k,r])=>`<div class="record-row"><div><b>${+k.slice(8)}일</b><span>${r.memo||'메모 없음'}</span></div><div><strong>${r.manDays.toFixed(2)} 공수</strong><span>${won(r.manDays*r.rate+(+r.allowance||0))}</span></div></div>`).join(''):'<p style="color:#718092;text-align:center;padding:20px">이번 달 기록이 없습니다.</p>';$('#detailDialog').showModal()};
 render();
+
+// 선택한 기록을 같은 달의 여러 날짜에 한 번에 복사하는 옵션입니다.
+const baseOpenRecord = openRecord;
+openRecord = function(key) {
+  baseOpenRecord(key);
+  const date = new Date(key + 'T00:00:00');
+  $('#weekdayLabel').textContent = ['일', '월', '화', '수', '목', '금', '토'][date.getDay()];
+  $('#fillWeekly').checked = false;
+  $('#fillAfter').checked = false;
+};
+
+$('#recordForm').addEventListener('submit', (event) => {
+  if (event.submitter?.value === 'cancel' || (!$('#fillWeekly').checked && !$('#fillAfter').checked)) return;
+  const record = {
+    manDays: +$('#manDays').value,
+    rate: +$('#rate').value,
+    allowance: +$('#allowance').value,
+    memo: $('#memo').value.trim()
+  };
+  const selected = new Date(selectedKey + 'T00:00:00');
+  const lastDate = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+  for (let day = 1; day <= lastDate.getDate(); day += 1) {
+    const date = new Date(current.getFullYear(), current.getMonth(), day);
+    const sameWeekday = $('#fillWeekly').checked && date.getDay() === selected.getDay();
+    const afterSelected = $('#fillAfter').checked && date >= selected;
+    if (sameWeekday || afterSelected) state.records[keyFor(date)] = { ...record };
+  }
+  save();
+  render();
+});
