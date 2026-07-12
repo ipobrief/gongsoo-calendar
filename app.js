@@ -30,6 +30,45 @@ const openSettings=()=>{$('#defaultRate').value=state.settings.rate;$('#workerNa
 $('#detailButton').onclick=()=>{const prefix=`${current.getFullYear()}-${String(current.getMonth()+1).padStart(2,'0')}`, rows=Object.entries(state.records).filter(([k])=>k.startsWith(prefix)).sort();const mans=rows.reduce((s,[,r])=>s+r.manDays,0),income=rows.reduce((s,[,r])=>s+r.manDays*r.rate+(+r.allowance||0),0);$('#detailTitle').textContent=$('#monthTitle').textContent;$('#workDays').textContent=`${rows.length}일`;$('#averageDays').textContent=rows.length?(mans/rows.length).toFixed(2):'0.00';$('#reportIncome').textContent=won(income);$('#recordList').innerHTML=rows.length?rows.map(([k,r])=>`<div class="record-row"><div><b>${+k.slice(8)}일</b><span>${r.memo||'메모 없음'}</span></div><div><strong>${r.manDays.toFixed(2)} 공수</strong><span>${won(r.manDays*r.rate+(+r.allowance||0))}</span></div></div>`).join(''):'<p style="color:#718092;text-align:center;padding:20px">이번 달 기록이 없습니다.</p>';$('#detailDialog').showModal()};
 render();
 
+// Google Identity Services: 클라이언트 ID는 설정 패널에 저장됩니다.
+const googleUserKey = 'gongsoo-google-user';
+const googleUser = () => JSON.parse(localStorage.getItem(googleUserKey) || 'null');
+function updateLoginButton() {
+  const user = googleUser();
+  $('#loginButton').textContent = user ? `${user.name || '내 계정'}님` : '로그인';
+}
+function readGoogleCredential(credential) {
+  try {
+    const payload = credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(decodeURIComponent(atob(payload).split('').map((c) => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`).join('')));
+  } catch { return null; }
+}
+window.handleGoogleCredential = function(response) {
+  const account = readGoogleCredential(response.credential);
+  if (!account) return;
+  localStorage.setItem(googleUserKey, JSON.stringify({ name: account.name, email: account.email, picture: account.picture }));
+  updateLoginButton();
+  $('#loginUser').hidden = false;
+  $('#loginUser').innerHTML = `<b>${account.name || 'Google 계정'}</b>${account.email || ''}`;
+  $('#loginMessage').textContent = '로그인되었습니다. 공수 기록은 현재 이 기기의 브라우저에 저장됩니다.';
+  $('#googleLoginBox').innerHTML = '';
+};
+function renderGoogleLogin() {
+  const box = $('#googleLoginBox');
+  const clientId = state.settings.googleClientId;
+  if (!clientId) { $('#loginMessage').textContent = '⚙ 설정에서 Google 클라이언트 ID를 저장한 뒤 로그인할 수 있습니다.'; return; }
+  if (!window.google?.accounts?.id) { $('#loginMessage').textContent = 'Google 로그인 모듈을 불러오는 중입니다. 잠시 후 다시 열어 주세요.'; return; }
+  try {
+    window.google.accounts.id.initialize({ client_id: clientId, callback: window.handleGoogleCredential });
+    box.innerHTML = '';
+    window.google.accounts.id.renderButton(box, { theme: 'outline', size: 'large', width: 280, text: 'signin_with', locale: 'ko' });
+  } catch { $('#loginMessage').textContent = 'Google 로그인 설정을 확인해 주세요.'; }
+}
+$('#loginButton').onclick = () => { $('#loginDialog').showModal(); const user = googleUser(); $('#loginUser').hidden = !user; if (user) $('#loginUser').innerHTML = `<b>${user.name || 'Google 계정'}</b>${user.email || ''}`; $('#loginMessage').textContent = user ? '로그인되어 있습니다. 공수 기록은 현재 이 기기의 브라우저에 저장됩니다.' : 'Google 계정으로 로그인하세요.'; renderGoogleLogin(); };
+$('#settingsButton').addEventListener('click', () => { $('#googleClientId').value = state.settings.googleClientId || ''; });
+$('#saveSettings').addEventListener('click', () => { state.settings.googleClientId = $('#googleClientId').value.trim(); save(); });
+updateLoginButton();
+
 // 선택한 기록을 같은 달의 여러 날짜에 한 번에 복사하는 옵션입니다.
 const baseOpenRecord = openRecord;
 openRecord = function(key) {
