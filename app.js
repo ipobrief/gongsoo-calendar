@@ -5,7 +5,7 @@ let current = new Date(); current = new Date(current.getFullYear(), current.getM
 let selectedKey = '';
 const won = (n) => `${Math.round(n || 0).toLocaleString('ko-KR')}원`;
 const keyFor = (date) => `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-const save = () => localStorage.setItem(storeKey, JSON.stringify(state));
+const save = () => { state.updatedAt = Date.now(); localStorage.setItem(storeKey, JSON.stringify(state)); window.dispatchEvent(new CustomEvent('gongsoo:local-save', { detail: state })); };
 const colorFor = (v) => v >= 1.4 ? 'orange' : v >= 1 ? 'blue' : 'green';
 function render(){
   const year=current.getFullYear(), month=current.getMonth();
@@ -121,3 +121,13 @@ render = function() {
   });
 };
 render();
+
+window.addEventListener('gongsoo:remote-data', (event) => {
+  const remote = event.detail;
+  if (!remote || !remote.records) return;
+  state.records = remote.records;
+  state.settings = remote.settings || state.settings;
+  state.updatedAt = remote.updatedAt || Date.now();
+  localStorage.setItem(storeKey, JSON.stringify(state));
+  render();
+});
