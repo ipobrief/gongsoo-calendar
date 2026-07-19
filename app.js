@@ -124,8 +124,9 @@ render = function() {
   renderWithHolidays();
   document.querySelectorAll('.day[data-date]').forEach((day) => {
     const key = day.dataset.date;
+    if (state.records[key]?.manual) return;
     const record = effectiveRecord(key);
-    if (!state.records[key]?.manual) day.querySelector('.entry')?.remove();
+    day.querySelector('.entry')?.remove();
     if (record.manDays <= 0) return;
     day.insertAdjacentHTML('beforeend', `<span class="entry ${colorFor(record.manDays)}"><b>${record.manDays.toFixed(2)}</b><small>${Math.round(record.manDays * record.rate).toLocaleString('ko-KR')}</small></span>`);
   });
