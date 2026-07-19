@@ -92,3 +92,65 @@ window.addEventListener('gongsoo:remote-data', (event) => {
   localStorage.setItem(storeKey, JSON.stringify(state));
   render();
 });
+
+// 저장된 기록이 없는 날짜에는 요일별 기본 공수를 화면에만 적용합니다.
+// 날짜를 열어 저장하면 그 날짜는 자동값 대신 저장한 값이 사용됩니다.
+const scheduledManDays = (key) => {
+  const date = new Date(key + 'T00:00:00');
+  if (date.getDay() === 0 || koreanHolidays[key]) return 0;
+  return date.getDay() === 3 || date.getDay() === 6 ? 1 : 1.5;
+};
+const scheduledRecord = (key) => ({
+  manDays: scheduledManDays(key),
+  rate: state.settings.rate,
+  allowance: 0,
+  memo: ''
+});
+const monthKeys = () => {
+  const year = current.getFullYear(), month = current.getMonth();
+  return Array.from({ length: new Date(year, month + 1, 0).getDate() }, (_, index) => keyFor(new Date(year, month, index + 1)));
+};
+
+const renderWithHolidays = render;
+render = function() {
+  renderWithHolidays();
+  document.querySelectorAll('.day[data-date]').forEach((day) => {
+    const key = day.dataset.date;
+    if (state.records[key]) return;
+    const record = scheduledRecord(key);
+    if (record.manDays <= 0) return;
+    day.insertAdjacentHTML('beforeend', `<span class="entry ${colorFor(record.manDays)}"><b>${record.manDays.toFixed(2)}</b><small>${Math.round(record.manDays * record.rate).toLocaleString('ko-KR')}</small></span>`);
+  });
+  const records = monthKeys().map((key) => state.records[key] || scheduledRecord(key));
+  const mans = records.reduce((sum, record) => sum + (+record.manDays || 0), 0);
+  const income = records.reduce((sum, record) => sum + (+record.manDays || 0) * (+record.rate || 0) + (+record.allowance || 0), 0);
+  $('#monthlyManDays').textContent = `${mans.toFixed(2)} 공수`;
+  $('#monthlyIncome').textContent = won(income);
+  $('#streakCount').textContent = mans ? `${records.filter((record) => record.manDays > 0).length}일 기본 설정` : '이번 달';
+};
+
+const openRecordWithSchedule = openRecord;
+openRecord = function(key) {
+  openRecordWithSchedule(key);
+  if (state.records[key]) return;
+  const record = scheduledRecord(key);
+  $('#manDays').value = record.manDays;
+  $('#rate').value = record.rate;
+  $('#allowance').value = record.allowance;
+  $('#quickOptions').querySelectorAll('button').forEach((button) => button.classList.toggle('active', +button.dataset.value === record.manDays));
+  updateDayTotal();
+};
+
+$('#detailButton').onclick = () => {
+  const entries = monthKeys().map((key) => [key, state.records[key] || scheduledRecord(key)]).filter(([, record]) => record.manDays > 0);
+  const mans = entries.reduce((sum, [, record]) => sum + (+record.manDays || 0), 0);
+  const income = entries.reduce((sum, [, record]) => sum + (+record.manDays || 0) * (+record.rate || 0) + (+record.allowance || 0), 0);
+  $('#detailTitle').textContent = $('#monthTitle').textContent;
+  $('#workDays').textContent = `${entries.length}일`;
+  $('#averageDays').textContent = entries.length ? (mans / entries.length).toFixed(2) : '0.00';
+  $('#reportIncome').textContent = won(income);
+  $('#recordList').innerHTML = entries.map(([key, record]) => `<div class="record-row"><div><b>${+key.slice(8)}일</b><span>${record.memo || '기본 설정'}</span></div><div><strong>${record.manDays.toFixed(2)} 공수</strong><span>${won(record.manDays * record.rate + (+record.allowance || 0))}</span></div></div>`).join('') || '<p style="color:#718092;text-align:center;padding:20px">이번 달 기록이 없습니다.</p>';
+  $('#detailDialog').showModal();
+};
+
+render();
