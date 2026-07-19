@@ -106,6 +106,14 @@ const scheduledRecord = (key) => ({
   allowance: 0,
   memo: ''
 });
+const effectiveRecord = (key) => {
+  const saved = state.records[key];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const date = new Date(key + 'T00:00:00');
+  if (saved && (saved.manual || date <= today)) return saved;
+  return scheduledRecord(key);
+};
 const monthKeys = () => {
   const year = current.getFullYear(), month = current.getMonth();
   return Array.from({ length: new Date(year, month + 1, 0).getDate() }, (_, index) => keyFor(new Date(year, month, index + 1)));
@@ -116,12 +124,12 @@ render = function() {
   renderWithHolidays();
   document.querySelectorAll('.day[data-date]').forEach((day) => {
     const key = day.dataset.date;
-    if (state.records[key]) return;
-    const record = scheduledRecord(key);
+    const record = effectiveRecord(key);
+    if (!state.records[key]?.manual) day.querySelector('.entry')?.remove();
     if (record.manDays <= 0) return;
     day.insertAdjacentHTML('beforeend', `<span class="entry ${colorFor(record.manDays)}"><b>${record.manDays.toFixed(2)}</b><small>${Math.round(record.manDays * record.rate).toLocaleString('ko-KR')}</small></span>`);
   });
-  const records = monthKeys().map((key) => state.records[key] || scheduledRecord(key));
+  const records = monthKeys().map((key) => effectiveRecord(key));
   const mans = records.reduce((sum, record) => sum + (+record.manDays || 0), 0);
   const income = records.reduce((sum, record) => sum + (+record.manDays || 0) * (+record.rate || 0) + (+record.allowance || 0), 0);
   $('#monthlyManDays').textContent = `${mans.toFixed(2)} 공수`;
@@ -132,8 +140,8 @@ render = function() {
 const openRecordWithSchedule = openRecord;
 openRecord = function(key) {
   openRecordWithSchedule(key);
-  if (state.records[key]) return;
-  const record = scheduledRecord(key);
+  if (state.records[key]?.manual) return;
+  const record = effectiveRecord(key);
   $('#manDays').value = record.manDays;
   $('#rate').value = record.rate;
   $('#allowance').value = record.allowance;
@@ -142,7 +150,7 @@ openRecord = function(key) {
 };
 
 $('#detailButton').onclick = () => {
-  const entries = monthKeys().map((key) => [key, state.records[key] || scheduledRecord(key)]).filter(([, record]) => record.manDays > 0);
+  const entries = monthKeys().map((key) => [key, effectiveRecord(key)]).filter(([, record]) => record.manDays > 0);
   const mans = entries.reduce((sum, [, record]) => sum + (+record.manDays || 0), 0);
   const income = entries.reduce((sum, [, record]) => sum + (+record.manDays || 0) * (+record.rate || 0) + (+record.allowance || 0), 0);
   $('#detailTitle').textContent = $('#monthTitle').textContent;
@@ -152,5 +160,26 @@ $('#detailButton').onclick = () => {
   $('#recordList').innerHTML = entries.map(([key, record]) => `<div class="record-row"><div><b>${+key.slice(8)}일</b><span>${record.memo || '기본 설정'}</span></div><div><strong>${record.manDays.toFixed(2)} 공수</strong><span>${won(record.manDays * record.rate + (+record.allowance || 0))}</span></div></div>`).join('') || '<p style="color:#718092;text-align:center;padding:20px">이번 달 기록이 없습니다.</p>';
   $('#detailDialog').showModal();
 };
+
+$('#recordForm').addEventListener('submit', (event) => {
+  if (event.submitter?.value === 'cancel') return;
+  const record = {
+    manDays: +$('#manDays').value,
+    rate: +$('#rate').value,
+    allowance: +$('#allowance').value,
+    memo: $('#memo').value.trim(),
+    manual: true
+  };
+  const selected = new Date(selectedKey + 'T00:00:00');
+  const lastDate = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+  for (let day = 1; day <= lastDate.getDate(); day += 1) {
+    const date = new Date(current.getFullYear(), current.getMonth(), day);
+    const sameWeekday = $('#fillWeekly').checked && date.getDay() === selected.getDay();
+    const afterSelected = $('#fillAfter').checked && date >= selected;
+    if (keyFor(date) === selectedKey || sameWeekday || afterSelected) state.records[keyFor(date)] = { ...record };
+  }
+  save();
+  render();
+});
 
 render();
