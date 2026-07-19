@@ -7,8 +7,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=2" />
     <style>
+      @media (max-width: 480px) {
+        .summary-card { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto !important; padding-left: 14px; gap: 5px; }
+        .summary-card div:nth-child(2) { display: block !important; }
+        .summary-card button { padding: 15px 10px; font-size: 13px; }
+        .summary-card button span { display: none; }
+        .summary-card strong { font-size: 14px; }
+      }
       .fill-options{display:flex;flex-direction:column;gap:10px;margin:17px 0 2px}.fill-options label{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;cursor:pointer}.fill-options input{appearance:none;width:20px;height:20px;margin:0;border:2px solid #b8c5d1;border-radius:5px;background:white;display:grid;place-content:center}.fill-options input:checked{border-color:#287fdd;background:#287fdd}.fill-options input:checked:after{content:'✓';color:white;font-size:14px;font-weight:700;line-height:1}
       .holiday-name{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;color:#df625e;font-size:10px;font-weight:700;line-height:1.1}.holiday-day .day-num{color:#df625e!important}.holiday-day{background:#fffafa}.topbar-actions{display:flex;align-items:center;gap:3px}.login-button{border:1px solid #d9e2e9;border-radius:20px;background:#fff;padding:7px 10px;color:#314353;font-size:12px;font-weight:700}.account-note{font-size:12px;line-height:1.5;color:#718092;margin:4px 0 16px}.login-dialog-copy{font-size:14px;line-height:1.65;color:#526171;margin:2px 0 18px}.google-box{min-height:44px;display:flex;align-items:center;justify-content:center}.login-user{font-size:14px;background:#f3f7fa;padding:12px;border-radius:10px;margin-bottom:14px}.login-user b{display:block;margin-bottom:2px}
     </style>
@@ -44,7 +51,7 @@
           <strong id="monthlyManDays">0.00 공수</strong>
         </div>
         <div>
-          <span>이번 달 수입</span>
+          <span>총 수입</span>
           <strong id="monthlyIncome">0원</strong>
         </div>
         <button id="detailButton">상세 보기 <span>→</span></button>
